@@ -1,0 +1,149 @@
+{
+  "realm": "acme",
+  "displayName": "ACME",
+  "enabled": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "loginWithEmailAllowed": true,
+  "accessTokenLifespan": 600,
+  "ssoSessionIdleTimeout": 3600,
+  "ssoSessionMaxLifespan": 43200,
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false}],\"groups\":[{\"name\":\"user-metadata\",\"displayHeader\":\"User metadata\",\"displayDescription\":\"Attributes, which refer to user metadata\"}],\"unmanagedAttributePolicy\":\"ENABLED\"}"
+          ]
+        }
+      }
+    ]
+  },
+  "roles": {
+    "realm": [
+      {
+        "name": "viewer",
+        "description": "Read-only access to ACME applications"
+      },
+      {
+        "name": "editor",
+        "description": "Can change ACME application data"
+      }
+    ],
+    "client": {
+      "reports-service": [
+        {
+          "name": "report-reader",
+          "description": "Can read reports"
+        }
+      ]
+    }
+  },
+  "groups": [
+    {
+      "name": "finance",
+      "attributes": {
+        "cost-center": [
+          "FIN-01"
+        ]
+      },
+      "realmRoles": [
+        "viewer"
+      ],
+      "subGroups": [
+        {
+          "name": "payables"
+        }
+      ]
+    },
+    {
+      "name": "engineering"
+    }
+  ],
+  "users": [
+    {
+      "username": "jdoe",
+      "email": "jdoe@corp.com",
+      "firstName": "John",
+      "lastName": "Doe",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": {
+        "department": [
+          "finance"
+        ]
+      },
+      "realmRoles": [
+        "default-roles-acme",
+        "viewer"
+      ],
+      "groups": [
+        "/finance"
+      ]
+    },
+    {
+      "username": "asmith",
+      "email": "asmith@corp.com",
+      "firstName": "Alice",
+      "lastName": "Smith",
+      "enabled": true,
+      "emailVerified": true,
+      "realmRoles": [
+        "default-roles-acme",
+        "editor"
+      ],
+      "clientRoles": {
+        "reports-service": [
+          "report-reader"
+        ]
+      },
+      "groups": [
+        "/engineering"
+      ]
+    },
+    {
+      "username": "bwhite",
+      "email": "bwhite@example.com",
+      "firstName": "Bob",
+      "lastName": "White",
+      "enabled": false,
+      "emailVerified": false,
+      "realmRoles": [
+        "default-roles-acme"
+      ],
+      "groups": [
+        "/finance/payables"
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "acme-web",
+      "name": "ACME Web",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "rootUrl": "http://localhost:3000",
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ]
+    },
+    {
+      "clientId": "reports-service",
+      "name": "Reports Service",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "serviceAccountsEnabled": true
+    }
+  ]
+}

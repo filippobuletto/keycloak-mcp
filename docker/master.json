@@ -1,0 +1,148 @@
+{
+  "realm": "master",
+  "roles": {
+    "realm": [
+      {
+        "name": "mcp-admin",
+        "description": "May call the keycloak-mcp HTTP endpoint"
+      }
+    ]
+  },
+  "clientScopes": [
+    {
+      "name": "mcp:tools",
+      "description": "Sign-in scope advertised by keycloak-mcp; access still needs the mcp-admin role",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "keycloak-mcp",
+      "name": "keycloak-mcp",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "defaultClientScopes": [
+        "basic",
+        "roles"
+      ],
+      "optionalClientScopes": [
+        "mcp:tools",
+        "offline_access"
+      ],
+      "protocolMappers": [
+        {
+          "name": "keycloak-mcp-server-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "keycloak-mcp-server",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "keycloak-mcp-server",
+      "name": "keycloak-mcp-server",
+      "description": "Exchanges the users' tokens for Admin API tokens; dev and test secret only",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "keycloak-mcp-server-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "attributes": {
+        "standard.token.exchange.enabled": "true"
+      },
+      "defaultClientScopes": [
+        "basic",
+        "roles",
+        "profile",
+        "email",
+        "web-origins",
+        "acr"
+      ],
+      "optionalClientScopes": [
+        "kc-admin-api"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "mcp-user",
+      "email": "mcp-user@example.com",
+      "firstName": "MCP",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "mcp-user",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-master",
+        "mcp-admin",
+        "admin"
+      ]
+    },
+    {
+      "username": "mcp-viewer",
+      "email": "mcp-viewer@example.com",
+      "firstName": "MCP",
+      "lastName": "Viewer",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "mcp-viewer",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-master",
+        "mcp-admin"
+      ],
+      "clientRoles": {
+        "acme-realm": [
+          "view-users",
+          "view-realm"
+        ]
+      }
+    },
+    {
+      "username": "mcp-guest",
+      "email": "mcp-guest@example.com",
+      "firstName": "MCP",
+      "lastName": "Guest",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "mcp-guest",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-master"
+      ]
+    }
+  ]
+}

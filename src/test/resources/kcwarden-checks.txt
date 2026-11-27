@@ -1,0 +1,69 @@
+# kcwarden checks restated by the security-audit skill: kcwarden v0.19.0 plus two auditors from main (d6ee9cf).
+# Row: <reference file> <check name> [main] [not-visible]
+# main: added on kcwarden main after v0.19.0. not-visible: no tool of this server returns the setting yet.
+
+realm.md AccessTokenLifespanTooLong
+realm.md AdminEventsStoredWithoutExpiration main
+realm.md KeycloakVersionShouldBeUpToDate
+realm.md OfflineSessionMaxLifespanDisabled
+realm.md PasswordHashingIterationsTooLow
+realm.md PasswordPolicyMissing
+realm.md RealmBruteForceProtectionDisabled
+realm.md RealmEmailVerificationDisabled
+realm.md RealmSelfRegistrationEnabled
+realm.md RefreshTokenReuseCountShouldBeZero
+realm.md RefreshTokensShouldBeRevokedAfterUse
+realm.md SsoSessionIdleTimeoutExceedsClientSessionIdleTimeout
+realm.md UserEventsStoredWithoutExpiration main
+
+identity-providers.md IdentityProviderWithMappersWithoutForceSyncMode
+identity-providers.md IdentityProviderWithOneTimeSync
+identity-providers.md IdentityProviderWithSignatureVerificationDisabled
+identity-providers.md OIDCIdentityProviderWithoutPKCE
+identity-providers.md SamlIdentityProviderWithSignatureVerificationDisabled
+identity-providers.md SamlIdentityProviderWithoutEncryptedAssertions
+identity-providers.md SamlIdentityProviderWithoutPostBindingResponse
+identity-providers.md SamlIdentityProviderWithoutSignedAssertions
+identity-providers.md SamlIdentityProviderWithoutSignedAuthnRequests
+
+client-scopes.md UsingNonDefaultUserAttributesInScopesWithoutUserProfilesFeatureIsDangerous
+
+role-guardrails.md ClientWithSensitiveRole
+role-guardrails.md ClientWithSensitiveScope
+role-guardrails.md GroupWithSensitiveRole
+role-guardrails.md ProtocolMapperWithConfig
+role-guardrails.md ProtocolMapperWithConfigOnClientScope
+role-guardrails.md RoleWithSensitiveAssociatedRole
+role-guardrails.md ServiceAccountWithGroup
+role-guardrails.md ServiceAccountWithSensitiveRole
+
+clients.md ClientAccessTokenLifespanTooLong
+clients.md ClientAuthenticationViaMTLSOrJWTRecommended
+clients.md ClientHasErroneouslyConfiguredWildcardURI
+clients.md ClientHasNoRedirectUris
+clients.md ClientHasUndefinedBaseDomainAndSchema
+clients.md ClientHasUndefinedBaseDomainAndSchemaInPostLogoutRedirectUri
+clients.md ClientMustNotUseGlobalWildcardURI
+clients.md ClientMustNotUseUnencryptedNonlocalRedirectUri
+clients.md ClientSessionIdleTimeoutNotSetWhileSsoSessionIdleTimeoutTooLong
+clients.md ClientShouldDisableImplicitGrantFlow
+clients.md ClientShouldNotUseWildcardRedirectURI
+clients.md ClientUsesCustomRedirectUriScheme
+clients.md ClientWebOriginsMustBeValid
+clients.md ClientWebOriginsMustNotUseWildcard
+clients.md ClientWithDefaultOfflineAccessScope
+clients.md ClientWithFullScopeAllowed
+clients.md ClientWithOptionalOfflineAccessScope
+clients.md ClientWithServiceAccountAndOtherFlowEnabled
+clients.md ConfidentialClientShouldDisableDirectAccessGrants
+clients.md ConfidentialClientShouldEnforcePKCE
+clients.md PublicClientShouldDisableDirectAccessGrants
+clients.md PublicClientsMustEnforcePKCE
+clients.md SamlClientHasErroneouslyConfiguredWildcardURI
+clients.md SamlClientShouldNotUseWildcardRedirectURI
+clients.md SamlClientWithAssertionSignatureDisabled
+clients.md SamlClientWithClientSignatureDisabled
+clients.md SamlClientWithEncryptionDisabled
+clients.md SamlClientWithWeakSignatureAlgorithm
+clients.md SamlClientWithoutOneTimeUseCondition
+clients.md UsingNonDefaultUserAttributesInClientsWithoutUserProfilesFeatureIsDangerous

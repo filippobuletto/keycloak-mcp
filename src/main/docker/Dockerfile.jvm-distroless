@@ -1,0 +1,38 @@
+####
+# JVM image on a distroless base: no shell, no package manager, non-root user 65532.
+# The JRE holds only the modules the application needs (jdeps on target/quarkus-app).
+#
+# Build:
+#   ./mvnw package -DskipTests -Ddistroless -Dquarkus.container-image.build=true
+#
+# Run over HTTP (the default):
+#   docker run -i --rm --read-only -p 8080:8080 -e KEYCLOAK_URL=... ghcr.io/filippobuletto/keycloak-mcp:<version>-distroless
+#
+# Run over stdio:
+#   docker run -i --rm --read-only -e QUARKUS_PROFILE=stdio -e KEYCLOAK_URL=... ghcr.io/filippobuletto/keycloak-mcp:<version>-distroless
+####
+FROM eclipse-temurin:25-jdk@sha256:ce2ef9d2d67a68de5e196d4de9d743327c44a10b57fe02ec39f572c652cacfd3 AS jre
+RUN jlink \
+    --add-modules java.base,java.compiler,java.desktop,java.management,java.naming,java.net.http,java.rmi,java.scripting,java.security.jgss,java.sql,jdk.unsupported,jdk.zipfs \
+    --strip-debug --no-man-pages --no-header-files --compress=zip-6 \
+    --output /jre
+
+FROM quay.io/quarkus/quarkus-distroless-image:2.0@sha256:83440820e28d18f03afd07d10e65f5b9d702d1952ea6d4f58b9af94225aadc98
+LABEL org.opencontainers.image.title="keycloak-mcp" \
+      org.opencontainers.image.description="MCP server for the Keycloak Admin API (JVM, distroless)" \
+      org.opencontainers.image.licenses="EUPL-1.2" \
+      org.opencontainers.image.source="https://github.com/filippobuletto/keycloak-mcp"
+
+COPY --from=jre /jre /jre
+COPY target/quarkus-app/lib/ /deployments/lib/
+COPY target/quarkus-app/*.jar /deployments/
+COPY target/quarkus-app/app/ /deployments/app/
+COPY target/quarkus-app/quarkus/ /deployments/quarkus/
+
+EXPOSE 8080
+USER 65532
+
+# The Vert.x file cache writes to /tmp; turning it off lets the image run with --read-only
+ENTRYPOINT ["/jre/bin/java", "-Dquarkus.http.host=0.0.0.0", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", \
+            "-Dquarkus.vertx.caching=false", "-Dquarkus.vertx.classpath-resolving=false", \
+            "-jar", "/deployments/quarkus-run.jar"]

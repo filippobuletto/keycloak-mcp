@@ -1,0 +1,56 @@
+# Draft, not active: GitHub runs only files under .github/workflows/.
+# To enable it, move this file to .github/workflows/ci.yml.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  jvm:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      # Unit tests, ITs on the jar and the formatter check
+      - run: ./mvnw -B verify
+
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: aarch64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      # Container build of the binary, then only the ITs against it; the jvm job runs the unit tests
+      - run: ./mvnw -B verify -Dnative -Dtest=NoSuchTest -Dsurefire.failIfNoSpecifiedTests=false
+      - id: version
+        run: echo "version=$(./mvnw -B -q help:evaluate -Dexpression=project.version -DforceStdout)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: keycloak-mcp-${{ steps.version.outputs.version }}-linux-${{ matrix.arch }}
+          path: target/*-runner
+          if-no-files-found: error

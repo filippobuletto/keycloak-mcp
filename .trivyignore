@@ -1,0 +1,16 @@
+# Findings accepted by docker/trivy-scan.sh, one ID per line, each with the reason above it.
+
+# No HEALTHCHECK in the Dockerfiles: the distroless images have no shell or HTTP client to run one, and the
+# server has no health endpoint; orchestrators probe the HTTP port instead.
+DS-0026
+
+# libzstd1 in quay.io/quarkus/quarkus-distroless-image:2.0 (Debian 13), HIGH, fixed in 1.5.7+dfsg-1+deb13u1 but not
+# yet in the base. Not loaded: ldd shows libzstd in neither the native binary nor any library of the jlink JRE.
+# Drop this entry when the base image carries the fix.
+CVE-2026-124851
+
+# libssl3t64 in the same base, HIGH, no fix yet; both are QUIC denial-of-service issues. Not loaded: ldd shows libssl
+# in neither the native binary nor the jlink JRE, which uses its own TLS. Listed for the record: unfixed findings
+# don't fail the scan.
+CVE-2026-107494
+CVE-2026-124709

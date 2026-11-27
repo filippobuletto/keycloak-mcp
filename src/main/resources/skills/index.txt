@@ -1,0 +1,12 @@
+safe-changes/SKILL.md
+safe-changes/references/confirmations.md
+login-troubleshooting/SKILL.md
+login-troubleshooting/references/event-errors.md
+flow-change/SKILL.md
+flow-change/references/recipes.md
+security-audit/SKILL.md
+security-audit/references/realm.md
+security-audit/references/identity-providers.md
+security-audit/references/client-scopes.md
+security-audit/references/role-guardrails.md
+security-audit/references/clients.md

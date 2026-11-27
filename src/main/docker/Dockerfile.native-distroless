@@ -1,0 +1,26 @@
+####
+# Native image on a distroless base: no shell, no package manager, non-root user 65532.
+#
+# Build:
+#   ./mvnw package -DskipTests -Dnative -Ddistroless -Dquarkus.container-image.build=true
+#
+# Run over HTTP (the default):
+#   docker run -i --rm --read-only -p 8080:8080 -e KEYCLOAK_URL=... ghcr.io/filippobuletto/keycloak-mcp:<version>-native-distroless
+#
+# Run over stdio:
+#   docker run -i --rm --read-only -e KEYCLOAK_URL=... ghcr.io/filippobuletto/keycloak-mcp:<version>-native-distroless -Dquarkus.profile=stdio
+####
+FROM quay.io/quarkus/quarkus-distroless-image:2.0@sha256:83440820e28d18f03afd07d10e65f5b9d702d1952ea6d4f58b9af94225aadc98
+LABEL org.opencontainers.image.title="keycloak-mcp" \
+      org.opencontainers.image.description="MCP server for the Keycloak Admin API (native, distroless)" \
+      org.opencontainers.image.licenses="EUPL-1.2" \
+      org.opencontainers.image.source="https://github.com/filippobuletto/keycloak-mcp"
+
+WORKDIR /work/
+COPY --chmod=0555 target/*-runner /work/application
+
+EXPOSE 8080
+USER 65532
+
+# The Vert.x file cache writes to /tmp; turning it off lets the image run with --read-only
+ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0", "-Dquarkus.vertx.caching=false", "-Dquarkus.vertx.classpath-resolving=false"]
