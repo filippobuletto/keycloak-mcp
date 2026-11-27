@@ -116,7 +116,7 @@ Build the image and run it against the compose Keycloak:
 docker run --rm -p 8081:8080 --add-host=host.docker.internal:host-gateway \
   -e KEYCLOAK_URL=http://host.docker.internal:8080 \
   -e MCP_OIDC_CLIENT_SECRET=keycloak-mcp-server-secret \
-  ghcr.io/filippobuletto/keycloak-mcp:1.0.0-SNAPSHOT
+  ghcr.io/filippobuletto/keycloak-mcp:0.1.0-SNAPSHOT
 ```
 
 Docker Desktop defines `host.docker.internal` on its own; Docker engines on Linux, including Lima on macOS, need the
@@ -141,8 +141,8 @@ a second. It runs inside a builder container, so it needs Docker but no local Gr
 ./mvnw package -Dnative -DskipTests -Dquarkus.container-image.build=true
 ```
 
-This produces `target/keycloak-mcp-1.0.0-SNAPSHOT-runner` for the Docker host's CPU (Linux aarch64 on Apple silicon)
-and the image `ghcr.io/filippobuletto/keycloak-mcp:1.0.0-SNAPSHOT-native`. Leave out
+This produces `target/keycloak-mcp-0.1.0-SNAPSHOT-runner` for the Docker host's CPU (Linux aarch64 on Apple silicon)
+and the image `ghcr.io/filippobuletto/keycloak-mcp:0.1.0-SNAPSHOT-native`. Leave out
 `-Dquarkus.container-image.build=true` to build only the binary. The JVM image keeps its own tag.
 
 The image runs the HTTP transport by default, as the JVM image does, with the same environment variables. Arguments
@@ -153,7 +153,7 @@ stdio server, on macOS too:
 claude mcp add keycloak -- docker run -i --rm --add-host=host.docker.internal:host-gateway \
   -e KEYCLOAK_URL=http://host.docker.internal:8080 \
   -e KEYCLOAK_USERNAME=admin -e KEYCLOAK_PASSWORD=admin \
-  ghcr.io/filippobuletto/keycloak-mcp:1.0.0-SNAPSHOT-native -Dquarkus.profile=stdio
+  ghcr.io/filippobuletto/keycloak-mcp:0.1.0-SNAPSHOT-native -Dquarkus.profile=stdio
 ```
 
 For HTTP, run the image as in [HTTP from the container image](#http-from-the-container-image), with the `-native`
@@ -164,7 +164,7 @@ claude mcp add keycloak \
   -e KEYCLOAK_URL=http://localhost:8080 \
   -e KEYCLOAK_USERNAME=admin \
   -e KEYCLOAK_PASSWORD=admin \
-  -- "$PWD/target/keycloak-mcp-1.0.0-SNAPSHOT-runner" -Dquarkus.profile=stdio
+  -- "$PWD/target/keycloak-mcp-0.1.0-SNAPSHOT-runner" -Dquarkus.profile=stdio
 ```
 
 Every native run logs `The profile 'prod' used to build the native image is different from the runtime profile ...`.
@@ -177,15 +177,15 @@ The images in [Connect](connect.md#get-the-server) are distroless variants: no s
 `src/main/docker/Dockerfile.jvm-distroless` (a JRE made with `jlink`) and `Dockerfile.native-distroless`:
 
 ```bash
-# ghcr.io/filippobuletto/keycloak-mcp:1.0.0-SNAPSHOT-distroless
+# ghcr.io/filippobuletto/keycloak-mcp:0.1.0-SNAPSHOT-distroless
 ./mvnw package -DskipTests -Ddistroless -Dquarkus.container-image.build=true
 
-# ghcr.io/filippobuletto/keycloak-mcp:1.0.0-SNAPSHOT-native-distroless
+# ghcr.io/filippobuletto/keycloak-mcp:0.1.0-SNAPSHOT-native-distroless
 ./mvnw package -DskipTests -Dnative -Ddistroless -Dquarkus.container-image.build=true
 ```
 
-Without `-Ddistroless` the builds above give the local images `1.0.0-SNAPSHOT` (UBI9 Java runtime) and
-`1.0.0-SNAPSHOT-native` (UBI9 micro), as before; releases don't publish those two.
+Without `-Ddistroless` the builds above give the local images `0.1.0-SNAPSHOT` (UBI9 Java runtime) and
+`0.1.0-SNAPSHOT-native` (UBI9 micro), as before; releases don't publish those two.
 
 Run them with `--read-only`. The Java image selects stdio with `-e QUARKUS_PROFILE=stdio`, because arguments after
 its name reach the application, not Java:
@@ -195,7 +195,7 @@ claude mcp add keycloak -- docker run -i --rm --read-only --add-host=host.docker
   -e QUARKUS_PROFILE=stdio \
   -e KEYCLOAK_URL=http://host.docker.internal:8080 \
   -e KEYCLOAK_USERNAME=admin -e KEYCLOAK_PASSWORD=admin \
-  ghcr.io/filippobuletto/keycloak-mcp:1.0.0-SNAPSHOT-distroless
+  ghcr.io/filippobuletto/keycloak-mcp:0.1.0-SNAPSHOT-distroless
 ```
 
 The `jlink` module list in `Dockerfile.jvm-distroless` comes from
@@ -261,7 +261,7 @@ repository:
 
 ```bash
 docker/trivy-scan.sh                 # the pom version
-docker/trivy-scan.sh 1.0.0-SNAPSHOT
+docker/trivy-scan.sh 0.1.0-SNAPSHOT
 ```
 
 Each target gets `target/trivy/<target>.json` with every finding and a table in `<target>.txt`. The script exits 1
@@ -269,6 +269,15 @@ when a target has a HIGH or CRITICAL vulnerability with a fixed version, or a HI
 secret, and lists them in `<target>.verdict.txt`. [`.trivyignore`](../.trivyignore) holds the accepted findings,
 each with its reason. The first run downloads the Trivy database into the Docker volume `keycloak-mcp-trivy-cache`.
 `TRIVY_DOCKER_SOCKET` sets the socket path as the engine sees it (default `/var/run/docker.sock`).
+
+`TRIVY_IMAGES` scans the given image references instead, with the same rules, and skips the version argument and the
+repository scan. The release workflow uses it on the images it builds:
+
+```bash
+TRIVY_IMAGES="ghcr.io/filippobuletto/keycloak-mcp:0.1.0-SNAPSHOT-distroless other/image:1.2" docker/trivy-scan.sh
+```
+
+Each report is named after its reference, with `/`, `:` and `@` turned into `_`.
 
 ### SonarQube
 

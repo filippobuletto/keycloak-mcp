@@ -9,6 +9,9 @@
 # misconfiguration or secret, that .trivyignore doesn't accept; target/trivy/<target>.verdict.txt lists them.
 #
 #   TRIVY_DOCKER_SOCKET  Docker socket as the engine sees it (default /var/run/docker.sock)
+#   TRIVY_IMAGES         space-separated image references to scan instead of the four local tags; the version argument,
+#                        the local-tag check and the repository scan are skipped, and each report is named after its
+#                        reference with / : @ turned into _ (the release workflow scans its images this way)
 set -eu
 
 trivy_image="aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb"
@@ -16,15 +19,17 @@ repo="ghcr.io/filippobuletto/keycloak-mcp"
 root="$(cd "$(dirname "$0")/.." && pwd)"
 out="$root/target/trivy"
 
-version="${1:-}"
-if [ -z "$version" ]; then
-    version=$("$root/mvnw" -q -f "$root/pom.xml" help:evaluate -Dexpression=project.version -DforceStdout)
+given="${TRIVY_IMAGES:-}"
+if [ -z "$given" ]; then
+    version="${1:-}"
+    if [ -z "$version" ]; then
+        version=$("$root/mvnw" -q -f "$root/pom.xml" help:evaluate -Dexpression=project.version -DforceStdout)
+    fi
+    images="$version $version-native $version-distroless $version-native-distroless"
+    for tag in $images; do
+        docker image inspect "$repo:$tag" >/dev/null 2>&1 || { echo "trivy-scan.sh: no local image $repo:$tag" >&2; exit 1; }
+    done
 fi
-
-images="$version $version-native $version-distroless $version-native-distroless"
-for tag in $images; do
-    docker image inspect "$repo:$tag" >/dev/null 2>&1 || { echo "trivy-scan.sh: no local image $repo:$tag" >&2; exit 1; }
-done
 mkdir -p "$out"
 
 trivy() {
@@ -50,11 +55,17 @@ scan() {
     fi
 }
 
-for tag in $images; do
-    scan "image-$tag" image "$repo:$tag"
-done
-# --offline-scan: no pom lookups on Maven Central; the image scans cover every jar the images ship
-scan repository fs --scanners vuln,secret,misconfig --offline-scan --skip-dirs target,.scratch,.claude-tmp .
+if [ -n "$given" ]; then
+    for ref in $given; do
+        scan "image-$(printf '%s' "$ref" | tr '/:@' '___')" image "$ref"
+    done
+else
+    for tag in $images; do
+        scan "image-$tag" image "$repo:$tag"
+    done
+    # --offline-scan: no pom lookups on Maven Central; the image scans cover every jar the images ship
+    scan repository fs --scanners vuln,secret,misconfig --offline-scan --skip-dirs target,.scratch,.claude-tmp .
+fi
 
 if [ -n "$failed" ]; then
     echo "trivy-scan.sh: HIGH or CRITICAL findings with a fix in:$failed (see target/trivy/<name>.verdict.txt)" >&2

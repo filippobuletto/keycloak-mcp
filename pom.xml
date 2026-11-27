@@ -5,7 +5,7 @@
 
     <groupId>io.github.filippobuletto</groupId>
     <artifactId>keycloak-mcp</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <name>keycloak-mcp</name>
     <description>MCP server exposing the Keycloak Admin REST API as tools</description>
 
