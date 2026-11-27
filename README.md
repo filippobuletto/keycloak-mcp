@@ -19,6 +19,14 @@ MCP elicitation), and every write tool refuses the `master` realm. Tools that re
 > does there. Read [Before you use it](docs/risks.md) for the risks: changes take effect at once, the model can get it
 > wrong, the server can do whatever its Keycloak account can do, and data ends up in the client.
 
+## Install
+
+Each release publishes the container images `ghcr.io/filippobuletto/keycloak-mcp:<version>` (Java runtime) and
+`:<version>-native` (native build, also `latest`) for `linux/amd64` and `linux/arm64`, and on the
+[releases page](https://github.com/filippobuletto/keycloak-mcp/releases) the JVM application for Java 25 and native
+Linux binaries. [Connect Claude Code](docs/connect.md) shows how to run them against your Keycloak. The rest of this
+page builds the server from source.
+
 ## Requirements
 
 - Java 25 (`.sdkmanrc` pins it)
@@ -66,7 +74,7 @@ asmith in, in realm acme?"
 | [Resources](docs/resources.md) | The read-only realm data offered as MCP resources |
 | [Prompts](docs/prompts.md) | The three prompts for auditing a realm, troubleshooting a sign-in and setting up a client |
 | [Skills](docs/skills.md) | The four Agent Skills for longer jobs |
-| [Development](docs/development.md) | Tests, dev mode, formatting, the native and distroless builds, connecting Claude Code to the local Keycloak, and the coverage, Trivy and SonarQube checks |
+| [Development](docs/development.md) | Tests, dev mode, formatting, the native and distroless builds, connecting Claude Code to the local Keycloak, the coverage, Trivy and SonarQube checks, CI and releases |
 
 ## License
 

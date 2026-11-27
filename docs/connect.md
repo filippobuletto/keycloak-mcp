@@ -15,25 +15,52 @@ user acts with their own Keycloak admin roles. Read [Before you use it](risks.md
 
 ## Get the server
 
-Each release publishes two container images, where `<version>` is a release from the
-[releases page](https://github.com/filippobuletto/keycloak-mcp/releases):
+Each release on the [releases page](https://github.com/filippobuletto/keycloak-mcp/releases) publishes two container
+images and, for running without Docker, the JVM application and native binaries.
+
+### Container images
+
+Both images are built for `linux/amd64` and `linux/arm64`; Docker pulls the one for your CPU. `<version>` is a
+release, for example `0.1.0`:
 
 | Image | Contents |
 |---|---|
-| `ghcr.io/filippobuletto/keycloak-mcp:<version>-distroless` | The server on a Java runtime reduced to the modules it uses |
-| `ghcr.io/filippobuletto/keycloak-mcp:<version>-native-distroless` | The native build: same server and settings, starts in a few hundredths of a second |
+| `ghcr.io/filippobuletto/keycloak-mcp:<version>` | The server on a Java runtime reduced to the modules it uses |
+| `ghcr.io/filippobuletto/keycloak-mcp:<version>-native` | The native build: same server and settings, starts in a few hundredths of a second |
+| `ghcr.io/filippobuletto/keycloak-mcp:latest` | The native image of the latest release, not of pre-releases |
 
 Both images:
 
 - contain no shell and no package manager, so `docker exec` into them has nothing to run;
 - run as the non-root user 65532;
-- write nothing to their filesystem, so they run with `docker run --read-only`;
-- are built for one CPU architecture; `docker image inspect --format '{{.Architecture}}' <image>` shows which.
+- write nothing to their filesystem, so they run with `docker run --read-only`.
 
 Both run the HTTP transport on port 8080 by default. To switch to stdio, pass `-e QUARKUS_PROFILE=stdio` to
 `docker run` for the Java image, or add `-Dquarkus.profile=stdio` after the image name for the native one: arguments
-after the image name go to the native server, while the Java image passes them to the application, not to Java. To
-build the server from source instead, see [Development](development.md).
+after the image name go to the native server, while the Java image passes them to the application, not to Java.
+
+### Without Docker
+
+The release assets are:
+
+| Asset | Runs on |
+|---|---|
+| `keycloak-mcp-<version>.zip` | Any OS with Java 25 |
+| `keycloak-mcp-<version>-linux-amd64` | Linux on x86-64 |
+| `keycloak-mcp-<version>-linux-arm64` | Linux on ARM64 |
+| `SHA256SUMS` | The SHA-256 checksums of the three files above |
+
+Check the files you downloaded against `SHA256SUMS`, in the directory that holds them:
+
+```bash
+sha256sum -c --ignore-missing SHA256SUMS
+```
+
+The zip holds the directory `quarkus-app`; run the server with `java -jar quarkus-app/quarkus-run.jar`. The binary
+needs the execute bit (`chmod +x keycloak-mcp-<version>-linux-amd64`). Both take the same variables as the images and
+run HTTP by default; for stdio, put `-Dquarkus.profile=stdio` before `-jar` for the zip, or after the binary.
+
+To build the server from source instead, see [Development](development.md).
 
 ## Admin identity
 
@@ -78,7 +105,7 @@ claude mcp add keycloak \
   -e KEYCLOAK_CLIENT_SECRET=<secret> \
   -- docker run -i --rm --read-only \
   -e KEYCLOAK_URL -e KEYCLOAK_GRANT_TYPE -e KEYCLOAK_CLIENT_ID -e KEYCLOAK_CLIENT_SECRET \
-  ghcr.io/filippobuletto/keycloak-mcp:<version>-native-distroless -Dquarkus.profile=stdio
+  ghcr.io/filippobuletto/keycloak-mcp:<version>-native -Dquarkus.profile=stdio
 ```
 
 `docker run -e NAME` without a value passes the variable from the environment Claude Code gives the command, so the
@@ -98,7 +125,7 @@ Keycloak, so the issuer must be a realm of the Keycloak at `KEYCLOAK_URL`. Add t
 
 - the client scope `mcp:tools`;
 - the realm role `mcp-admin`, granted to the users who may use the server;
-- a confidential client `keycloak-mcp-server` for the exchange: Client authentication and Standard token exchange on;
+- a confidential client `keycloak-mcp-server` for the exchange: Client authentication and Standard Token Exchange on;
   Standard flow, Direct access grants and Service account roles off; on its Client scopes tab, `kc-admin-api` as an
   Optional scope. Copy the secret from its Credentials tab;
 - a public client `keycloak-mcp` with Standard flow on, the redirect URI `http://localhost:33418/callback`, `mcp:tools`
@@ -129,7 +156,7 @@ docker run -d --name keycloak-mcp --read-only -p 127.0.0.1:8080:8080 \
   -e KEYCLOAK_URL=https://keycloak.example.com \
   -e MCP_OIDC_CLIENT_SECRET \
   -e MCP_PUBLIC_URL=https://mcp.example.com/mcp \
-  ghcr.io/filippobuletto/keycloak-mcp:<version>-native-distroless
+  ghcr.io/filippobuletto/keycloak-mcp:<version>-native
 ```
 
 The HTTP server needs no admin identity, so the `KEYCLOAK_GRANT_TYPE`, `KEYCLOAK_USERNAME`, `KEYCLOAK_PASSWORD` and

@@ -174,7 +174,9 @@ The `stdio` and `http` profiles only change run-time settings, so the warning is
 
 The images in [Connect](connect.md#get-the-server) are distroless variants: no shell, no package manager, user
 65532, and a filesystem they don't write to. The `distroless` profile builds them from
-`src/main/docker/Dockerfile.jvm-distroless` (a JRE made with `jlink`) and `Dockerfile.native-distroless`:
+`src/main/docker/Dockerfile.jvm-distroless` (a JRE made with `jlink`) and `Dockerfile.native-distroless`. Local
+builds tag them with a `-distroless` suffix; the [release workflow](#releases) publishes them as `<version>` and
+`<version>-native`:
 
 ```bash
 # ghcr.io/filippobuletto/keycloak-mcp:0.1.0-SNAPSHOT-distroless
@@ -303,3 +305,48 @@ export SONAR_TOKEN="$(docker/sonar-token.sh)"
 The results are at <http://127.0.0.1:9000/dashboard?id=keycloak-mcp>. The server keeps its data in the volumes
 `sonarqube_data`, `sonarqube_extensions` and `sonarqube_logs`; `docker compose -f docker/compose.yaml --profile sonar
 down` keeps them, and adding `-v` deletes them.
+
+## Continuous integration
+
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs on every push and pull request: `./mvnw -B verify` on
+`ubuntu-24.04`, and the native build with its integration tests on `ubuntu-24.04` and `ubuntu-24.04-arm`. It uploads
+nothing.
+
+## Releases
+
+[`.github/workflows/release.yml`](../.github/workflows/release.yml) runs when a tag `v*` is pushed. It stops unless the
+tag is `v` plus the pom version, runs `./mvnw -B verify`, then on one runner per CPU (amd64, arm64) builds the jar,
+the native binary and both distroless images, scans the images with `TRIVY_IMAGES` and
+[`docker/trivy-scan.sh`](../docker/trivy-scan.sh), and pushes them by digest. The last job tags the multi-arch images
+`<version>`, `<version>-native` and, for versions without a pre-release part, `latest`; writes `SHA256SUMS`; and
+creates a draft GitHub Release with the assets and the `CHANGELOG.md` section of the version as its notes. A
+pre-release such as `0.2.0-rc.1` uses the section of `0.2.0` and doesn't move `latest`.
+
+To cut a release, with `0.2.0` as the example:
+
+1. Add a `## [0.2.0] - <date>` section to [`CHANGELOG.md`](../CHANGELOG.md).
+2. Set the version and commit it:
+
+   ```bash
+   ./mvnw -q versions:set -DnewVersion=0.2.0 -DgenerateBackupPoms=false
+   git commit -s -am "build: release 0.2.0"
+   ```
+
+3. Push the commit and the tag, and wait for the workflow:
+
+   ```bash
+   git tag v0.2.0
+   git push origin main v0.2.0
+   ```
+
+4. Review the draft on the [releases page](https://github.com/filippobuletto/keycloak-mcp/releases) and publish it.
+5. Set the next development version:
+
+   ```bash
+   ./mvnw -q versions:set -DnewVersion=0.3.0-SNAPSHOT -DgenerateBackupPoms=false
+   git commit -s -am "build: start 0.3.0-SNAPSHOT"
+   ```
+
+GHCR creates the package `keycloak-mcp` as private on the first push. To let anyone pull the images, set its
+visibility to public once under the package's settings on GitHub. GitHub doesn't let a public package become private
+again.
