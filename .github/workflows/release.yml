@@ -105,8 +105,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      # Rebuilds from the builder cache and pushes without a tag; the config digest check proves the pushed image
-      # is the scanned one
+      # Rebuilds from the builder cache and pushes without a tag; equal manifest digests prove the pushed image is
+      # the scanned one
       - name: Push both images by digest
         run: |
           mkdir digests
@@ -114,13 +114,13 @@ jobs:
             docker buildx build --provenance=false -f "src/main/docker/Dockerfile.$flavor-distroless" \
               --output "type=image,name=$IMAGE,push-by-digest=true,name-canonical=true,push=true" \
               --metadata-file "meta-$flavor.json" .
-            scanned=$(jq -r '."containerimage.config.digest"' "scan-$flavor.json")
-            pushed=$(jq -r '."containerimage.config.digest"' "meta-$flavor.json")
+            scanned=$(jq -r '."containerimage.digest"' "scan-$flavor.json")
+            pushed=$(jq -r '."containerimage.digest"' "meta-$flavor.json")
             if [ "$scanned" != "$pushed" ]; then
-              echo "::error::$flavor image config $pushed differs from the scanned $scanned"
+              echo "::error::pushed $flavor image $pushed differs from the scanned $scanned"
               exit 1
             fi
-            jq -r '."containerimage.digest"' "meta-$flavor.json" > "digests/$flavor-$ARCH"
+            echo "$pushed" > "digests/$flavor-$ARCH"
           done
           cat digests/*
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
