@@ -79,7 +79,9 @@ jobs:
           cache: maven
       # One run gives target/quarkus-app and the native binary, then runs the ITs against the binary
       - name: Build the jar and the native binary
-        run: ./mvnw -B verify -Dnative -Dquarkus.package.jar.enabled=true -Dtest=NoSuchTest -Dsurefire.failIfNoSpecifiedTests=false
+        run: |
+          ./mvnw -B verify -Dnative -Dquarkus.package.jar.enabled=true -Djacoco.skip=true \
+            -Dtest=NoSuchTest -Dsurefire.failIfNoSpecifiedTests=false
       - name: Collect the release assets
         run: |
           mkdir dist

@@ -38,6 +38,7 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
-      # Container build of the binary, then only the ITs against it; the jvm job runs the unit tests.
+      # Container build of the binary, then only the ITs against it; the jvm job runs the unit tests and the coverage
+      # gate, which an IT-only run would fail.
       # No upload: the release workflow builds its own binaries, and artifact storage is small.
-      - run: ./mvnw -B verify -Dnative -Dtest=NoSuchTest -Dsurefire.failIfNoSpecifiedTests=false
+      - run: ./mvnw -B verify -Dnative -Djacoco.skip=true -Dtest=NoSuchTest -Dsurefire.failIfNoSpecifiedTests=false
